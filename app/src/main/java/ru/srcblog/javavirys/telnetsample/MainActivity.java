@@ -38,10 +38,14 @@ public class MainActivity extends AppCompatActivity implements TelnetNotificatio
 
     Thread tConnect = null,tDisconnect = null,tWrite = null,tRead = null;
 
+    EditText area;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        area = findViewById(R.id.editText);
 
         showHelp();
 
@@ -55,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements TelnetNotificatio
             return false;
         });
 
-        findViewById(R.id.editText).setOnKeyListener((view, i, keyEvent) -> true);
+        area.setOnKeyListener((view, i, keyEvent) -> true);
 
     }
 
@@ -83,6 +87,8 @@ public class MainActivity extends AppCompatActivity implements TelnetNotificatio
         cmd = ((EditText)findViewById(R.id.write_data)).getText().toString();
         ((EditText)findViewById(R.id.write_data)).setText("");
 
+        cmd = cmd.trim();
+
         if(cmd.equalsIgnoreCase("jvclose") && connected){
             ((EditText)findViewById(R.id.write_data)).getText().append("\nCommand jvClose\n");
             state = STATE_DISCONNECT;
@@ -97,6 +103,8 @@ public class MainActivity extends AppCompatActivity implements TelnetNotificatio
                 state = STATE_CONNECT_AND_READ;
                 tConnect = new Thread(this);
                 tConnect.start();
+            } else {
+                area.append("\nSyntax error!\n");
             }
             return;
         } else if(!connected || cmd.equalsIgnoreCase("jvhelp")){
@@ -180,18 +188,17 @@ public class MainActivity extends AppCompatActivity implements TelnetNotificatio
                 sBuf.append(new String(buff,0,ret_read));
                 System.out.println(sBuf.toString());
                 runOnUiThread(() -> {
-                    EditText edit = findViewById(R.id.editText);
-                    if(edit.getText().length() > 10000) {
-                        edit.getText().delete(0,edit.getText().length() - 5000);
+                    if(area.getText().length() > 10000) {
+                        area.getText().delete(0,area.getText().length() - 5000);
                     }
-                    edit.getText().append(sBuf.toString());
+                    area.getText().append(sBuf.toString());
                 });
             }
         }
         catch (IOException e)
         {
-            //e.printStackTrace();
-            System.err.println("Exception while reading socket:" + e.getMessage());
+            e.printStackTrace();
+            //System.err.println("Exception while reading socket:" + e.getMessage());
         }
     }
 
